@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useLanguage } from "../store/LangContext";
 
 const Canvas = () => {
-  const [code, setCode] = useState();
+  const [code, setCode] = useState('# Enter your "Python" code here.');
   const [output, setOutput] = useState("");
   const [activeTab, setActiveTab] = useState("editor");
   const [isLoading, setIsLoading] = useState(false);
