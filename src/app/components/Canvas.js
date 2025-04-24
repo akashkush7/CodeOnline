@@ -6,11 +6,18 @@ import { useLanguage } from "../store/LangContext";
 
 const Canvas = () => {
   const [code, setCode] = useState('# Enter your "Python" code here.');
+  const [inputValue, setInputValue] = useState("");
   const [output, setOutput] = useState("");
   const [activeTab, setActiveTab] = useState("editor");
   const [isLoading, setIsLoading] = useState(false);
-  const { isDark, languages, selectedLanguage, setSelectedLanguage } =
-    useLanguage();
+  const {
+    fileName,
+    setFileName,
+    isDark,
+    languages,
+    selectedLanguage,
+    setSelectedLanguage,
+  } = useLanguage();
 
   const handleClick = () => {
     setIsLoading(true);
@@ -20,35 +27,51 @@ const Canvas = () => {
 
   const executeCode = async () => {
     try {
-      // Using fetch API to send the POST request to Piston API
-      const response = await fetch("https://emkc.org/api/v1/piston/execute", {
+      setIsLoading(true);
+
+      const response = await fetch("https://emkc.org/api/v2/piston/execute", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          language: selectedLanguage, // e.g., 'python3'
-          source: code,
+          language: selectedLanguage,
+          version: "*",
+          files: [
+            {
+              name: fileName,
+              content: code,
+            },
+          ],
+          stdin: inputValue,
+          run_timeout: 10000, // 10 seconds for execution timeout
+          run_memory_limit: 128000000, // 128 MB of memory
+          compile_timeout: 1000,
         }),
       });
 
       const data = await response.json();
 
-      // Handle the response from the API
-      if (data.error) {
+      if (data.run) {
+        const { stdout, stderr } = data.run;
+        const combinedOutput = [stdout, stderr].filter(Boolean).join("\n");
+        setOutput(combinedOutput || "Executed successfully, but no output.");
+      } else if (data.error) {
         setOutput(`Error: ${data.error}`);
       } else {
-        setOutput(data.output);
+        setOutput("Unknown response structure.");
       }
+
       setIsLoading(false);
     } catch (error) {
-      setOutput(`Error: ${error.message}`);
+      setOutput(`Exception: ${error.message}`);
       setIsLoading(false);
     }
   };
 
   const handleChange = (e) => {
     setSelectedLanguage(e.target.value);
+    setFileName("main" + languages[e.target.option.selectedIndex].ext);
     setCode(languages[e.target.options.selectedIndex].comment);
   };
 
@@ -171,22 +194,50 @@ const Canvas = () => {
 
         {/* Output Column */}
         <div
-          className={`flex-1 p-2 ${
+          className={`flex-1 overflow-y-auto p-2 ${
             isDark ? "bg-gray-800 text-white" : "bg-white text-gray-800"
           } ${activeTab === "output" ? "block" : "hidden"} sm:block`}
         >
-          <div className="flex justify-between">
-            <h3 className="text-xl font-semibold mb-2">Output</h3>
-            <button
-              type="button"
-              className="flex items-center py-1 px-2 text-white bg-gray-800 border border-white focus:outline-none disabled:opacity-50"
-              onClick={() => setOutput("")}
+          <div className="flex flex-col h-full">
+            <div className="flex justify-between">
+              <h3 className="text-xl font-semibold mb-2">Input</h3>
+              <button
+                type="button"
+                className="flex items-center py-1 px-2 text-white bg-gray-800 border border-white focus:outline-none disabled:opacity-50"
+                onClick={() => setInputValue("")}
+              >
+                Clear
+              </button>
+            </div>
+
+            <textarea
+              className={`w-full min-h-20 p-4 ${
+                isDark ? "bg-black text-green-400" : "bg-white text-gray-800"
+              } rounded overflow-auto font-mono whitespace-pre-wrap resize-none border border-gray-700`}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              spellCheck={false}
+            />
+
+            <div className="flex justify-between mt-4">
+              <h3 className="text-xl font-semibold mb-2">Output</h3>
+              <button
+                type="button"
+                className="flex items-center py-1 px-2 text-white bg-gray-800 border border-white focus:outline-none disabled:opacity-50"
+                onClick={() => setOutput("")}
+              >
+                Clear
+              </button>
+            </div>
+
+            <pre
+              className={`w-full flex-grow p-4 ${
+                isDark ? "bg-black text-green-400" : "bg-white text-gray-800"
+              } rounded overflow-auto font-mono whitespace-pre-wrap resize-none border border-gray-700`}
             >
-              Clear
-            </button>
+              {output}
+            </pre>
           </div>
-          {output}
-          <pre>{/* Output will be displayed here */}</pre>
         </div>
       </div>
     </>
