@@ -217,6 +217,7 @@ const Canvas = () => {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               spellCheck={false}
+              placeholder="Type your program's input here, just like you'd enter it in a terminal"
             />
 
             <div className="flex justify-between mt-4">

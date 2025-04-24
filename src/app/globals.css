@@ -3,3 +3,23 @@
 body{
     background-color:#374151;
 }
+
+/* width */
+::-webkit-scrollbar {
+    @apply w-2;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-200 dark:bg-gray-700;
+  }
+  
+  /* Handle */
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-400 dark:bg-gray-500 rounded-xl;
+  }
+  
+  /* Handle on hover */
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500 dark:bg-gray-400;
+  }
