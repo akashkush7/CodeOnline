@@ -46,6 +46,7 @@ const Canvas = () => {
           body: JSON.stringify({
             lang: lang,
             source: code,
+            input: inputValue,
           }),
         }
       );
@@ -67,7 +68,7 @@ const Canvas = () => {
       // });
 
       let data = await response.json();
-      await pause(2000);
+      await pause(500);
       const result = await fetch(data.status_update_url, {
         method: "POST",
         headers: {
@@ -77,28 +78,36 @@ const Canvas = () => {
       });
 
       data = await result.json();
-      console.log(data.result.run_status.output);
-      await pause(2000);
 
-      const res = await fetch(data.result.run_status.output, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
-        },
-      });
+      if (data.result.compile_status == "OK") {
+        console.log(data.result.run_status.output);
+        await pause(500);
 
-      setOutput(res);
-
-      if (data.run) {
-        const { stdout, stderr } = data.run;
-        const combinedOutput = [stdout, stderr].filter(Boolean).join("\n");
-        setOutput(combinedOutput || "Executed successfully, but no output.");
-      } else if (data.error) {
-        setOutput(`Error: ${data.error}`);
+        const res = await fetch("https://gitonlineserver.onrender.com/file", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
+          },
+          body: JSON.stringify({
+            url: data.result.run_status.output,
+          }),
+        });
+        data = await res.json();
+        setOutput(data.output);
       } else {
-        setOutput("Unknown response structure.");
+        setOutput(data.result.compile_status);
       }
+
+      // if (data.run) {
+      //   const { stdout, stderr } = data.run;
+      //   const combinedOutput = [stdout, stderr].filter(Boolean).join("\n");
+      //   setOutput(combinedOutput || "Executed successfully, but no output.");
+      // } else if (data.error) {
+      //   setOutput(`Error: ${data.error}`);
+      // } else {
+      //   setOutput("Unknown response structure.");
+      // }
 
       setIsLoading(false);
     } catch (error) {
