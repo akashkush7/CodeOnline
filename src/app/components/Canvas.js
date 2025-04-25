@@ -10,6 +10,7 @@ const Canvas = () => {
   const [output, setOutput] = useState("");
   const [activeTab, setActiveTab] = useState("editor");
   const [isLoading, setIsLoading] = useState(false);
+  const [ext, setExt] = useState("py");
   const {
     fileName,
     setFileName,
@@ -44,9 +45,6 @@ const Canvas = () => {
             },
           ],
           stdin: inputValue,
-          run_timeout: 10000, // 10 seconds for execution timeout
-          run_memory_limit: 128000000, // 128 MB of memory
-          compile_timeout: 1000,
         }),
       });
 
@@ -71,8 +69,21 @@ const Canvas = () => {
 
   const handleChange = (e) => {
     setSelectedLanguage(e.target.value);
-    setFileName("main" + languages[e.target.option.selectedIndex].ext);
-    setCode(languages[e.target.options.selectedIndex].comment);
+    const item = languages[e.target.options.selectedIndex];
+    setExt(item.ext);
+    const newFileName = "Main" + item.ext;
+    setFileName(newFileName);
+    const comm = item.comment.split(" ")[0];
+    setCode(`${comm} ${newFileName}\n` + item.comment);
+  };
+
+  const handleSave = () => {
+    const blob = new Blob([code], { type: ext });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(a.href);
   };
 
   return (
@@ -96,51 +107,74 @@ const Canvas = () => {
                 ))}
               </select>
             </div>
-
-            {/* Execute Button */}
-            <button
-              type="button"
-              className="flex items-center p-1 bg-blue-600 text-white rounded-sm hover:bg-blue-700 focus:outline-none disabled:opacity-50"
-              onClick={handleClick}
-              disabled={isLoading}
-            >
-              {isLoading ? (
+            <div className="flex">
+              {/* Save Button */}
+              <button
+                type="button"
+                className="flex items-center p-1 mx-2 bg-blue-600 text-white rounded-sm hover:bg-blue-700 focus:outline-none disabled:opacity-50"
+                onClick={handleSave}
+              >
+                <h6 className="px-1 hidden sm:block">Save</h6>
                 <svg
-                  className="animate-spin h-6 w-6 text-white"
                   xmlns="http://www.w3.org/2000/svg"
+                  className="w-5 h-5 block sm:hidden"
                   fill="none"
                   viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
                 >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
                   <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z"
-                  ></path>
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M17 3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V7l-4-4zM16 21v-6H8v6M8 3v4h8V3"
+                  />
                 </svg>
-              ) : (
-                <>
-                  <h6 className="px-1 hidden sm:block">Run</h6>
+              </button>
+              {/* Execute Button */}
+              <button
+                type="button"
+                className="flex items-center p-1 bg-blue-600 text-white rounded-sm hover:bg-blue-700 focus:outline-none disabled:opacity-50"
+                onClick={handleClick}
+                disabled={isLoading}
+              >
+                {isLoading ? (
                   <svg
+                    className="animate-spin h-6 w-6 text-white"
                     xmlns="http://www.w3.org/2000/svg"
-                    fill="white"
+                    fill="none"
                     viewBox="0 0 24 24"
-                    width="24"
-                    height="24"
-                    className="block sm:hidden"
                   >
-                    <path d="M8 5v14l11-7z" />
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v4l3-3-3-3v4a8 8 0 00-8 8z"
+                    ></path>
                   </svg>
-                </>
-              )}
-            </button>
+                ) : (
+                  <>
+                    <h6 className="px-1 hidden sm:block">Run</h6>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="white"
+                      viewBox="0 0 24 24"
+                      width="24"
+                      height="24"
+                      className="block sm:hidden"
+                    >
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </nav>
