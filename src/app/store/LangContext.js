@@ -10,14 +10,14 @@ const LanguageContext = createContext({
   setSelectedLanguage: () => {},
   setIsDark: () => {},
   languages: [],
-  fileName: "main.py",
+  fileName: "Main.py",
   setFileName: () => {},
 });
 
 // Provider component
 export const LanguageProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(false);
-  const [fileName, setFileName] = useState("");
+  const [fileName, setFileName] = useState("Main.py");
   const [selectedLanguage, setSelectedLanguage] = useState("python");
   const languages = [
     {

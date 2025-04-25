@@ -5,12 +5,6 @@ import { useState } from "react";
 import { useLanguage } from "../store/LangContext";
 
 const Canvas = () => {
-  const [code, setCode] = useState('# Enter your "Python" code here.');
-  const [inputValue, setInputValue] = useState("");
-  const [output, setOutput] = useState("");
-  const [activeTab, setActiveTab] = useState("editor");
-  const [isLoading, setIsLoading] = useState(false);
-  const [ext, setExt] = useState("py");
   const {
     fileName,
     setFileName,
@@ -19,6 +13,14 @@ const Canvas = () => {
     selectedLanguage,
     setSelectedLanguage,
   } = useLanguage();
+  const [code, setCode] = useState(
+    `# ${fileName}\n# Enter your "Python" code here.`
+  );
+  const [inputValue, setInputValue] = useState("");
+  const [output, setOutput] = useState("");
+  const [activeTab, setActiveTab] = useState("editor");
+  const [isLoading, setIsLoading] = useState(false);
+  const [ext, setExt] = useState("py");
 
   const handleClick = () => {
     setIsLoading(true);
