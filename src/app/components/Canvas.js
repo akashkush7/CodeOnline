@@ -4,6 +4,8 @@ import Editor from "@monaco-editor/react";
 import { useState } from "react";
 import { useLanguage } from "../store/LangContext";
 
+const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const Canvas = () => {
   const {
     fileName,
@@ -21,6 +23,7 @@ const Canvas = () => {
   const [activeTab, setActiveTab] = useState("editor");
   const [isLoading, setIsLoading] = useState(false);
   const [ext, setExt] = useState("py");
+  const [lang, setLang] = useState("PYTHON3_8");
 
   const handleClick = () => {
     setIsLoading(true);
@@ -32,25 +35,60 @@ const Canvas = () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch("https://emkc.org/api/v2/piston/execute", {
+      const response = await fetch(
+        "https://api.hackerearth.com/v4/partner/code-evaluation/submissions/",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
+          },
+          body: JSON.stringify({
+            lang: lang,
+            source: code,
+          }),
+        }
+      );
+      //   method: "POST",
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   body: JSON.stringify({
+      //     language: selectedLanguage,
+      //     version: "*",
+      //     files: [
+      //       {
+      //         name: fileName,
+      //         content: code,
+      //       },
+      //     ],
+      //     stdin: inputValue,
+      //   }),
+      // });
+
+      let data = await response.json();
+      await pause(2000);
+      const result = await fetch(data.status_update_url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
         },
-        body: JSON.stringify({
-          language: selectedLanguage,
-          version: "*",
-          files: [
-            {
-              name: fileName,
-              content: code,
-            },
-          ],
-          stdin: inputValue,
-        }),
       });
 
-      const data = await response.json();
+      data = await result.json();
+      console.log(data.result.run_status.output);
+      await pause(2000);
+
+      const res = await fetch(data.result.run_status.output, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
+        },
+      });
+
+      setOutput(res);
 
       if (data.run) {
         const { stdout, stderr } = data.run;
@@ -72,6 +110,7 @@ const Canvas = () => {
   const handleChange = (e) => {
     setSelectedLanguage(e.target.value);
     const item = languages[e.target.options.selectedIndex];
+    setLang(item.lang);
     setExt(item.ext);
     const newFileName = "Main" + item.ext;
     setFileName(newFileName);
