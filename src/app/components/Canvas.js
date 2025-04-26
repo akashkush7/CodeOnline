@@ -4,8 +4,6 @@ import Editor from "@monaco-editor/react";
 import { useState } from "react";
 import { useLanguage } from "../store/LangContext";
 
-const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-
 const Canvas = () => {
   const {
     fileName,
@@ -30,6 +28,35 @@ const Canvas = () => {
     setActiveTab("output");
     executeCode();
   };
+
+  async function pollForResult(url) {
+    return new Promise((resolve, reject) => {
+      const intervalId = setInterval(async () => {
+        try {
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
+            },
+          });
+          const data = await response.json();
+
+          if (
+            data.request_status.code === "REQUEST_COMPLETED" ||
+            (data.request_status.code == "CODE_COMPILED" &&
+              data.result.compile_status != "OK")
+          ) {
+            clearInterval(intervalId); // Stop polling
+            resolve(data); // <-- Resolve the promise with result!
+          }
+        } catch (error) {
+          clearInterval(intervalId);
+          reject(error); // <-- Reject the promise on error
+        }
+      }, 2000);
+    });
+  }
 
   const executeCode = async () => {
     try {
@@ -68,21 +95,14 @@ const Canvas = () => {
       // });
 
       let data = await response.json();
-      await pause(500);
-      const result = await fetch(data.status_update_url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
-        },
-      });
-
-      data = await result.json();
-
-      if (data.result.compile_status == "OK") {
+      const result = await pollForResult(data.status_update_url);
+      data = result;
+      console.log(data);
+      if (
+        data.result.compile_status == "OK" &&
+        data.result.run_status.status == "AC"
+      ) {
         console.log(data.result.run_status.output);
-        await pause(500);
-
         const res = await fetch("https://gitonlineserver.onrender.com/file", {
           method: "POST",
           headers: {
@@ -95,8 +115,10 @@ const Canvas = () => {
         });
         data = await res.json();
         setOutput(data.output);
-      } else {
+      } else if (data.result.compile_status != "OK") {
         setOutput(data.result.compile_status);
+      } else {
+        setOutput(data.result.run_status.stderr);
       }
 
       // if (data.run) {
