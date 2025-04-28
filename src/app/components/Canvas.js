@@ -29,108 +29,23 @@ const Canvas = () => {
     executeCode();
   };
 
-  async function pollForResult(url) {
-    return new Promise((resolve, reject) => {
-      const intervalId = setInterval(async () => {
-        try {
-          const response = await fetch(url, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
-            },
-          });
-          const data = await response.json();
-
-          if (
-            data.request_status.code === "REQUEST_COMPLETED" ||
-            (data.request_status.code == "CODE_COMPILED" &&
-              data.result.compile_status != "OK")
-          ) {
-            clearInterval(intervalId); // Stop polling
-            resolve(data); // <-- Resolve the promise with result!
-          }
-        } catch (error) {
-          clearInterval(intervalId);
-          reject(error); // <-- Reject the promise on error
-        }
-      }, 2000);
-    });
-  }
-
   const executeCode = async () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch(
-        "https://api.hackerearth.com/v4/partner/code-evaluation/submissions/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
-          },
-          body: JSON.stringify({
-            lang: lang,
-            source: code,
-            input: inputValue,
-          }),
-        }
-      );
-      //   method: "POST",
-      //   headers: {
-      //     "Content-Type": "application/json",
-      //   },
-      //   body: JSON.stringify({
-      //     language: selectedLanguage,
-      //     version: "*",
-      //     files: [
-      //       {
-      //         name: fileName,
-      //         content: code,
-      //       },
-      //     ],
-      //     stdin: inputValue,
-      //   }),
-      // });
-
-      let data = await response.json();
-      const result = await pollForResult(data.status_update_url);
-      data = result;
-      console.log(data);
-      if (
-        data.result.compile_status == "OK" &&
-        data.result.run_status.status == "AC"
-      ) {
-        console.log(data.result.run_status.output);
-        const res = await fetch("https://gitonlineserver.onrender.com/file", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "client-secret": "d07b05b81b399b33049ec8edcdf1fb597690aada",
-          },
-          body: JSON.stringify({
-            url: data.result.run_status.output,
-          }),
-        });
-        data = await res.json();
-        setOutput(data.output);
-      } else if (data.result.compile_status != "OK") {
-        setOutput(data.result.compile_status);
-      } else {
-        setOutput(data.result.run_status.stderr);
-      }
-
-      // if (data.run) {
-      //   const { stdout, stderr } = data.run;
-      //   const combinedOutput = [stdout, stderr].filter(Boolean).join("\n");
-      //   setOutput(combinedOutput || "Executed successfully, but no output.");
-      // } else if (data.error) {
-      //   setOutput(`Error: ${data.error}`);
-      // } else {
-      //   setOutput("Unknown response structure.");
-      // }
-
+      const response = await fetch("https://gitonlineserver.onrender.com", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          lang: lang,
+          source: code,
+          input: inputValue,
+        }),
+      });
+      const data = await response.json();
+      setOutput(data.output);
       setIsLoading(false);
     } catch (error) {
       setOutput(`Exception: ${error.message}`);
