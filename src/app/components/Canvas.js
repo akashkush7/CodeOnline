@@ -33,17 +33,20 @@ const Canvas = () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch("https://gitonlineserver.onrender.com", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          lang: lang,
-          source: code,
-          input: inputValue,
-        }),
-      });
+      const response = await fetch(
+        "https://gitonlineserver.onrender.com/execute",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            lang: lang,
+            source: code,
+            input: inputValue,
+          }),
+        }
+      );
       const data = await response.json();
       setOutput(data.output);
       setIsLoading(false);
