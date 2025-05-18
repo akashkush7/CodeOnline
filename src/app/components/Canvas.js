@@ -34,7 +34,7 @@ const Canvas = () => {
       setIsLoading(true);
 
       const response = await fetch(
-        "https://gitonlineserver.onrender.com/execute",
+        "https://code-online-server.vercel.app/execute",
         {
           method: "POST",
           headers: {
